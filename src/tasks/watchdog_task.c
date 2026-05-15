@@ -14,11 +14,6 @@ typedef struct {
 static TaskHB_t      s_heartbeat[MAX_TASKS];
 static SemaphoreHandle_t s_uart_mutex;
 
-/* Task IDs */
-#define TASK_ID_SENSOR  0
-#define TASK_ID_PROCESS 1
-#define TASK_ID_UART    2
-
 void watchdog_kick(uint8_t task_id)
 {
     if (task_id < MAX_TASKS) {

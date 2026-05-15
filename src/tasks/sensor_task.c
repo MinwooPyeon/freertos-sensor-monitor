@@ -1,5 +1,6 @@
 #include "sensor_task.h"
 #include "../drivers/virtual_sensor.h"
+#include "watchdog_task.h"
 #include "task.h"
 
 #define SENSOR_POLL_MS  500
@@ -14,12 +15,12 @@ static void sensor_task(void *params)
 
     for (;;) {
         sensor_read(&data);
-        /* Drop oldest reading if queue full rather than blocking */
         if (xQueueSend(s_queue, &data, 0) == errQUEUE_FULL) {
             SensorData_t discard;
             xQueueReceive(s_queue, &discard, 0);
             xQueueSend(s_queue, &data, 0);
         }
+        watchdog_kick(TASK_ID_SENSOR);
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(SENSOR_POLL_MS));
     }
 }

@@ -1,6 +1,7 @@
 #include "uart_task.h"
 #include "process_task.h"
 #include "../drivers/uart_driver.h"
+#include "watchdog_task.h"
 #include "task.h"
 
 static QueueHandle_t     s_log_queue;
@@ -19,6 +20,7 @@ static void uart_task(void *params)
                 uart_printf("[%s] %s\n", level_str[msg.level], msg.text);
                 xSemaphoreGive(s_uart_mutex);
             }
+            watchdog_kick(TASK_ID_UART);
         }
     }
 }

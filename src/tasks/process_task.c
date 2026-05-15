@@ -1,5 +1,6 @@
 #include "process_task.h"
 #include "../drivers/virtual_sensor.h"
+#include "watchdog_task.h"
 #include "task.h"
 #include <stdio.h>
 
@@ -32,6 +33,7 @@ static void process_task(void *params)
                      (unsigned long)data.pressure);
 
             xQueueSend(s_log_queue, &msg, pdMS_TO_TICKS(100));
+            watchdog_kick(TASK_ID_PROCESS);
         }
     }
 }
