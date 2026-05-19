@@ -7,7 +7,8 @@
 static QueueHandle_t     s_log_queue;
 static SemaphoreHandle_t s_uart_mutex;
 
-static const char *level_str[] = { "INFO", "WARN", "ERROR" };
+#define LEVEL_STR_COUNT 3
+static const char *level_str[LEVEL_STR_COUNT] = { "INFO", "WARN", "ERROR" };
 
 static void uart_task(void *params)
 {
@@ -17,7 +18,8 @@ static void uart_task(void *params)
     for (;;) {
         if (xQueueReceive(s_log_queue, &msg, portMAX_DELAY) == pdTRUE) {
             if (xSemaphoreTake(s_uart_mutex, pdMS_TO_TICKS(100)) == pdTRUE) {
-                uart_printf("[%s] %s\n", level_str[msg.level], msg.text);
+                uint8_t lvl = (msg.level < LEVEL_STR_COUNT) ? msg.level : LEVEL_STR_COUNT - 1;
+                uart_printf("[%s] %s\n", level_str[lvl], msg.text);
                 xSemaphoreGive(s_uart_mutex);
             }
             watchdog_kick(TASK_ID_UART);

@@ -7,7 +7,7 @@
 #define KICK_TIMEOUT_MS     3000    /* task must kick within this window */
 
 typedef struct {
-    uint32_t last_kick_ms;
+    uint32_t last_kick_ticks;
     uint8_t  alive;
 } TaskHB_t;
 
@@ -17,7 +17,7 @@ static SemaphoreHandle_t s_uart_mutex;
 void watchdog_kick(uint8_t task_id)
 {
     if (task_id < MAX_TASKS) {
-        s_heartbeat[task_id].last_kick_ms = xTaskGetTickCount();
+        s_heartbeat[task_id].last_kick_ticks = xTaskGetTickCount();
         s_heartbeat[task_id].alive = 1;
     }
 }
@@ -34,7 +34,7 @@ static void watchdog_task(void *params)
         uint8_t any_fault = 0;
 
         for (uint8_t i = 0; i < MAX_TASKS; i++) {
-            uint32_t elapsed = now - s_heartbeat[i].last_kick_ms;
+            uint32_t elapsed = now - s_heartbeat[i].last_kick_ticks;
             if (s_heartbeat[i].alive && elapsed > pdMS_TO_TICKS(KICK_TIMEOUT_MS)) {
                 any_fault = 1;
                 if (xSemaphoreTake(s_uart_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
@@ -59,7 +59,7 @@ void watchdog_task_create(SemaphoreHandle_t uart_mutex)
 {
     s_uart_mutex = uart_mutex;
     for (uint8_t i = 0; i < MAX_TASKS; i++) {
-        s_heartbeat[i].last_kick_ms = 0;
+        s_heartbeat[i].last_kick_ticks = 0;
         s_heartbeat[i].alive        = 0;
     }
     xTaskCreate(watchdog_task, "Watchdog", WATCHDOG_TASK_STACK_SIZE,
